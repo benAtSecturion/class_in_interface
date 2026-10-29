@@ -853,7 +853,7 @@ class TaskVisitor final : public VNVisitor {
                         scopep = varRefp3->varScopep()->scopep();
                     }  // The base class pointer is set by a variable
                     else if (AstNodeCCall* assignedCCallp = VN_CAST(varRef2User4p, NodeCCall)) {
-                         scopep = assignedCCallp->funcp()->scopep()->aboveScopep();
+                        scopep = assignedCCallp->funcp()->scopep()->aboveScopep();
                     }
                     if (finalTaskp && scopep
                         && (VN_IS(scopep->modp(), Module) || VN_IS(scopep->modp(), Iface))) {
@@ -1590,7 +1590,7 @@ class TaskVisitor final : public VNVisitor {
                         varRefp->varp()->user3p(varRefp->varp());
                         unsetUser3p.push_back(varRefp->varp());
                         AstVarRef* newVarRefp = new AstVarRef{varRefp->fileline(), varRefp->varp(),
-                                                             VAccess::READWRITE};
+                                                              VAccess::READWRITE};
                         newVarRefp->varp()->varType(VVarType::PORT);
                         newVarRefp->varp()->direction(VDirection::REF);
                         newVarRefp->dtypeFrom(varRefp->varp());
@@ -1610,7 +1610,7 @@ class TaskVisitor final : public VNVisitor {
                             // When calling from a varref we must check the
                             // correctScopep which has where the tasks is
                             // being called from.
-                            if (!correctScopep) {  
+                            if (!correctScopep) {
                                 newvscp = new AstVarScope{varRefp->fileline(), scopep,
                                                           varRefp->varp()};
                             } else {
