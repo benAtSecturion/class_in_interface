@@ -11,12 +11,17 @@ import vltest_bootstrap
 
 test.scenarios('simulator')
 
-test.compile(verilator_flags2=['--binary', '--stats', '-fno-dfg'])
+test.compile(verilator_flags2=['--binary', '--stats', '-fno-dfg','-CFLAGS "-Wno-overloaded-virtual"'])
 
 test.execute()
 
+<<<<<<< HEAD
 test.file_grep(test.stats, r'Scheduling, Timing, variables written by suspendables\s+(\d+)', 8)
 test.file_grep(test.stats, r'Scheduling, Timing, external sensitivities, total\s+(\d+)', 8)
 test.file_grep(test.stats, r'Scheduling, Timing, unique external sentrees\s+(\d+)', 1)
+=======
+test.file_grep(test.stats,
+               r'Scheduling, count of non-inlined signal writes in suspendables\s+(\d+)', 11)
+>>>>>>> 0721036d4 (added compiler flags and white space fixes)
 
 test.passes()

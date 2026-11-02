@@ -15,8 +15,13 @@ test.compile(verilator_flags2=['--binary', '--stats', '-fno-dfg'])
 
 test.execute()
 
+<<<<<<< HEAD
 test.file_grep(test.stats, r'Scheduling, Timing, variables written by suspendables\s+(\d+)', 11)
 test.file_grep(test.stats, r'Scheduling, Timing, external sensitivities, total\s+(\d+)', 12)
 test.file_grep(test.stats, r'Scheduling, Timing, unique external sentrees\s+(\d+)', 2)
+=======
+test.file_grep(test.stats,
+               r'Scheduling, count of non-inlined signal writes in suspendables\s+(\d+)', 10)
+>>>>>>> 0721036d4 (added compiler flags and white space fixes)
 
 test.passes()
