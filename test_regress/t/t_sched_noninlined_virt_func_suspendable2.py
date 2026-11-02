@@ -12,12 +12,17 @@ import vltest_bootstrap
 test.scenarios('simulator')
 
 test.compile(
-    verilator_flags2=['--binary', '--stats', '-fno-dfg', '-CFLAGS "-Wno-overloaded-virtual"'])
+    verilator_flags2=['--binary', '--stats', '-fno-dfg'])
 
 test.execute()
 
+<<<<<<< HEAD
 test.file_grep(test.stats, r'Scheduling, Timing, variables written by suspendables\s+(\d+)', 11)
 test.file_grep(test.stats, r'Scheduling, Timing, external sensitivities, total\s+(\d+)', 11)
 test.file_grep(test.stats, r'Scheduling, Timing, unique external sentrees\s+(\d+)', 1)
+=======
+test.file_grep(test.stats,
+               r'Scheduling, count of non-inlined signal writes in suspendables\s+(\d+)', 14)
+>>>>>>> 026c2f227 (code fixes)
 
 test.passes()
