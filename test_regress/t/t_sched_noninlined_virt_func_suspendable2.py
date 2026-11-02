@@ -22,7 +22,11 @@ test.file_grep(test.stats, r'Scheduling, Timing, external sensitivities, total\s
 test.file_grep(test.stats, r'Scheduling, Timing, unique external sentrees\s+(\d+)', 1)
 =======
 test.file_grep(test.stats,
+<<<<<<< HEAD
                r'Scheduling, count of non-inlined signal writes in suspendables\s+(\d+)', 14)
 >>>>>>> 026c2f227 (code fixes)
+=======
+               r'Scheduling, count of non-inlined signal writes in suspendables\s+(\d+)', 8)
+>>>>>>> e6e73f40b (hopefully fixed t_sched_noninlined_func_suspendable2)
 
 test.passes()
