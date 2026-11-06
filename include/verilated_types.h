@@ -2259,11 +2259,16 @@ public:
     VlClassRef(VlNull) {};
     template <typename... T_Args>
     VlClassRef(VlDeleter& deleter, T_Args&&... args)
-        : m_objp{new T_Class} {
+        : m_objp{new T_Class(std::forward<T_Args>(args)...)} {
         // Instantly init the object to presevrve RAII
         m_objp->init(std::forward<T_Args>(args)...);
         m_objp->m_deleterp = &deleter;
     }
+    // template <typename T_First, typename... T_Rest>
+    // VlClassRef(VlDeleter& deleter, T_First&& first_arg, T_Rest&&... rest_args)
+    //     : m_objp{new T_Class(std::forward<T_Rest>(rest_args)...)} {
+    //     m_objp->init(std::forward<T_First>(first_arg));
+    // }
     VlClassRef(VlDeleter& deleter, T_Class&& args)
         // Move constructor
         : m_objp{new T_Class{std::forward<T_Class>(args)}} {

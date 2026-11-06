@@ -156,7 +156,31 @@ void EmitCBaseVisitorConst::emitCFuncHeader(const AstCFunc* funcp, const AstNode
         }
     }
     putns(funcp, funcNameProtect(funcp, modp));
-    puts("(" + cFuncArgs(funcp) + ")");
+    puts("(" + cFuncArgs(funcp));
+
+    
+    // Bind the refernce members to the new class
+    if(funcp->scopep() && funcp->isConstructor()){
+        std::vector<AstVar*> memberRefs;
+        if(AstClass* const classp = VN_CAST(funcp->scopep()->modp(), Class)){
+            for(AstNode* classMemberp = classp->op1p(); classMemberp; classMemberp = classMemberp->nextp()){
+                if(AstVar* varp = VN_CAST(classMemberp, Var)){
+                    if(varp->varType() == VVarType::MEMBER_REF){
+                        memberRefs.push_back(varp);
+                    }
+                }
+            }
+        }
+        if(memberRefs.size() > 0) puts(", ");
+        for(size_t i = 0; i < memberRefs.size(); ++i){
+            puts(memberRefs[i]->dtypep()->cType("", false, false)); // TODO this doesn't take into account packed variables
+            puts(memberRefs[i]->name() + "_REF");
+            if(i != memberRefs.size() - 1){
+                puts(", ");
+            }
+        }
+    }
+    puts(")");
     if (funcp->isConst().trueKnown() && funcp->isProperMethod()) puts(" const");
 }
 

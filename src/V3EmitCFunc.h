@@ -413,6 +413,20 @@ public:
         puts("\n");
         m_lazyDecls.emit(nodep);
         if (nodep->ifdef() != "") putns(nodep, "#ifdef " + nodep->ifdef() + "\n");
+
+        // Add member refs to 
+        // if(nodep->isConstructor() && VN_IS(nodep->scopep()->modp(), Class)){
+        //     std::vector<AstVar*> memberRefs;
+        //     for(AstNode* classMemberp = nodep->scopep()->modp()->op1p(); classMemberp; classMemberp = classMemberp->nextp()){
+        //         if(AstVar* varp = VN_CAST(classMemberp, Var)){
+        //             if(varp->varType() == VVarType::MEMBER_REF){
+        //                 memberRefs.push_back(varp);
+        //             }
+        //         }
+        //     }
+        // }
+        // else{
+        // }
         emitCFuncHeader(nodep, m_modp, /* withScope: */ true);
 
         puts(" {\n");
@@ -853,6 +867,25 @@ public:
         putns(nodep, "VL_NEW(" + EmitCUtil::prefixNameProtect(nodep->dtypep()) + ", "
                          + optionalProcArg(nodep->dtypep()) + "vlSymsp");
         putCommaIterateNext(nodep->argsp(), true);
+
+        // Bind the refernce members to the new class
+        std::vector<AstVar*> memberRefs;
+        if(AstClass* const classp = VN_CAST(nodep->funcp()->scopep()->modp(), Class)){
+            for(AstNode* classMemberp = classp->op1p(); classMemberp; classMemberp = classMemberp->nextp()){
+                if(AstVar* varp = VN_CAST(classMemberp, Var)){
+                    if(varp->varType() == VVarType::MEMBER_REF){
+                        memberRefs.push_back(varp);
+                    }
+                }
+            }
+        }
+        if(memberRefs.size() > 0) puts(", ");
+        for(size_t i = 0; i < memberRefs.size(); ++i){
+            puts("vlSelf->" + memberRefs[i]->name());
+            if(i != memberRefs.size() - 1){
+                puts(", ");
+            }
+        }
         puts(")");
     }
     void visit(AstCMethodHard* nodep) override {
