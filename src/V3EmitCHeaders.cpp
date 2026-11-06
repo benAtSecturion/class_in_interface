@@ -648,43 +648,44 @@ class EmitCHeader final : public EmitCBaseVisitorConst {
 
         for (const AstCFunc* const funcp : funcsp) {
             if (inClassBody) ofp()->putsPrivate(funcp->declPrivate());
-            if(funcp->isConstructor() && VN_IS(modp, Class)){
+            if (funcp->isConstructor() && VN_IS(modp, Class)) {
 
                 std::vector<AstVar*> memberRefs;
-                for(AstNode* classMemberp = modp->op1p(); classMemberp; classMemberp = classMemberp->nextp()){
-                    if(AstVar* varp = VN_CAST(classMemberp, Var)){
-                        if(varp->varType() == VVarType::MEMBER_REF){
+                for (AstNode* classMemberp = modp->op1p(); classMemberp;
+                     classMemberp = classMemberp->nextp()) {
+                    if (AstVar* varp = VN_CAST(classMemberp, Var)) {
+                        if (varp->varType() == VVarType::MEMBER_REF) {
                             memberRefs.push_back(varp);
                         }
                     }
                 }
-                if(memberRefs.size() == 0){
+                if (memberRefs.size() == 0) {
                     emitCFuncDecl(funcp, modp);
                     continue;
                 }
                 puts(EmitCUtil::prefixNameProtect(modp));
                 puts("(" + cFuncArgs(funcp) + ", ");
-                for(size_t i = 0; i < memberRefs.size(); ++i){
-                    puts(memberRefs[i]->dtypep()->cType("", false, false)); // TODO this doesn't take into account packed variables
+                for (size_t i = 0; i < memberRefs.size(); ++i) {
+                    puts(memberRefs[i]->dtypep()->cType(
+                        "", false,
+                        false));  // TODO this doesn't take into account packed variables
                     puts("& ");
                     puts(memberRefs[i]->name() + "_REF");
-                    if(i == memberRefs.size() - 1){
+                    if (i == memberRefs.size() - 1) {
                         puts(")");
-                    }
-                    else{
+                    } else {
                         puts(",");
                     }
                 }
                 puts(" : ");
-                for(size_t i = 0; i < memberRefs.size(); ++i){
+                for (size_t i = 0; i < memberRefs.size(); ++i) {
                     puts(memberRefs[i]->name());
                     puts("(");
                     puts(memberRefs[i]->name() + "_REF");
                     puts(")");
-                    if(i == memberRefs.size() - 1){
+                    if (i == memberRefs.size() - 1) {
                         puts("{}");
-                    }
-                    else{
+                    } else {
                         puts(", ");
                     }
                 }
@@ -695,8 +696,8 @@ class EmitCHeader final : public EmitCBaseVisitorConst {
                 // putns(funcp, funcNameProtect(funcp, modp));
                 // puts("(" + cFuncArgs(funcp) + ", ");
                 // for(size_t i = 0; i < memberRefs.size(); ++i){
-                //     puts(memberRefs[i]->dtypep()->cType("", false, false)); // TODO this doesn't take into account packed variables
-                //     puts(memberRefs[i]->name() + "_REF");
+                //     puts(memberRefs[i]->dtypep()->cType("", false, false)); // TODO this doesn't
+                //     take into account packed variables puts(memberRefs[i]->name() + "_REF");
                 //     if(i == memberRefs.size() - 1){
                 //         puts(")");
                 //     }

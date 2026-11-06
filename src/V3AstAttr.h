@@ -2436,7 +2436,7 @@ public:
         XTEMP,
         IFACEREF,  // Used to link Interfaces between modules
         MEMBER,
-        MEMBER_REF // Used to link classes to modules
+        MEMBER_REF  // Used to link classes to modules
     };
     enum en m_e;
     VVarType() VL_MT_SAFE : m_e{UNKNOWN} {}
@@ -2450,7 +2450,7 @@ public:
             = {"?",        "GPARAM",  "LPARAM",   "SPECPARAM", "GENVAR",    "VAR",
                "SUPPLY0",  "SUPPLY1", "WIRE",     "WREAL",     "TRIAND",    "TRIOR",
                "TRIWIRE",  "TRI0",    "TRI1",     "PORT",      "BLOCKTEMP", "MODULETEMP",
-               "STMTTEMP", "XTEMP",   "IFACEREF", "MEMBER", "MEMBER_REF"};
+               "STMTTEMP", "XTEMP",   "IFACEREF", "MEMBER",    "MEMBER_REF"};
         return names[m_e];
     }
     bool isParam() const { return m_e == GPARAM || m_e == LPARAM; }

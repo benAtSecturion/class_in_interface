@@ -1221,9 +1221,7 @@ class EmitVBaseVisitorConst VL_NOT_FINAL : public VNVisitorConst {
                         emitDType(varp->childDTypep());
                         puts(" ");
                     }
-                    if(varp->direction() == VDirection::REF){
-                        puts("*");
-                    }
+                    if (varp->direction() == VDirection::REF) { puts("*"); }
                     puts(varp->prettyName());
                     if (varp->valuep()) {
                         puts(" = ");
