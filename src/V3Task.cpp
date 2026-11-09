@@ -1598,49 +1598,8 @@ class TaskVisitor final : public VNVisitor {
                     if (!varRefp->varp()->user3p()) {
                         varRefp->varp()->user3p(varRefp->varp());
                         unsetUser3p.push_back(varRefp->varp());
-                        // AstVarRef* newVarRefp = new AstVarRef{varRefp->fileline(), varRefp->varp(),
-                        //                                       VAccess::READWRITE};
-                        // newVarRefp->varp()->varType(VVarType::PORT);
-                        // newVarRefp->varp()->direction(VDirection::REF);
-                        // newVarRefp->dtypeFrom(varRefp->varp());
-                        // // make sure this doesn't get optimized away
-                        // newVarRefp->varp()->sigPublic(true);
-                        // AstNodeVarRef* callFromp = VN_CAST(methodCallp->op1p(), NodeVarRef);
-                        // AstVarRef* subVref = VN_CAST(methodCallp->op1p(), VarRef);
-                        // // If the scope is the same keep it.
-                        // if (!callFromp
-                        //     || callFromp->varScopep()->scopep()
-                        //            == varRefp->varScopep()->scopep()) {
-                        //     newVarRefp->varScopep(varRefp->varScopep());
-                        // } else if (subVref
-                        //            && subVref->varp()->user4p()) {  // when we are making a call
-                        //                                             // with a child class
-                        //     AstVarScope* newvscp;
-                        //     // When calling from a varref we must check the
-                        //     // correctScopep which has where the tasks is
-                        //     // being called from.
-                        //     if (!correctScopep) {
-                        //         newvscp = new AstVarScope{varRefp->fileline(), scopep,
-                        //                                   varRefp->varp()};
-                        //     } else {
-                        //         newvscp = new AstVarScope{varRefp->fileline(), correctScopep,
-                        //                                   varRefp->varp()};
-                        //     }
-                        //     scopep->addVarsp(newvscp);
-                        //     if (subVref->varp()->user4p()) { newVarRefp->varScopep(newvscp); }
-                        //     varRefp->varp()->user1SetOnce();
-                        // } else {
-                        //     newVarRefp->varScopep(callFromp->varScopep());
-                        //     UASSERT_OBJ(callFromp, methodCallp,
-                        //                 "Can not find where this call is coming from");
-                        // }
-                        // AstArg* argp = new AstArg{varRefp->fileline(), "", newVarRefp};
-                        // refp->addArgsp(argp);
-
-                        // TODO make sure our rhs doesnt get optimized away
                         AstVar* memberVarp = nullptr;
                         if(classp && !classp->user3p()){
-
                             // Add a member variable to our classp that holds the signal
                             // And drive it
                             memberVarp = new AstVar{
@@ -1652,9 +1611,6 @@ class TaskVisitor final : public VNVisitor {
                             memberVarp->direction(VDirection::REF);
                             memberVarp->dtypeFrom(varRefp->varp());
                             memberVarp->sigPublic(true);
-
-                            // AstVarScope* memberVscp = new AstVarScope{memberVarp->fileline(), scopep, memberVarp};
-                            // scopep->addVarsp(memberVscp);
                             classp->prependMembersp(memberVarp);
                         }
                         else{
@@ -1665,33 +1621,6 @@ class TaskVisitor final : public VNVisitor {
                                 }
                             }
                         }
-
-                        // AstNodeVarRef* lhsObjRefp = callFromp->cloneTree(true);
-                        // lhsObjRefp->access(VAccess::WRITE); // Ensure WRITE access
-                        // AstMemberSel* memberSelp = new AstMemberSel{
-                        //     nodep->fileline(),
-                        //     lhsObjRefp,
-                        //     memberVarp
-                        // };
-                        // AstVarRef* newRefp = varRefp->cloneTree(true);
-                        // AstVarScope* newvscp = new AstVarScope{varRefp->fileline(), correctScopep,
-                        //     newRefp->varp()};
-                        // correctScopep->addVarsp(newvscp);
-                        // newRefp->varScopep(newvscp);
-
-                        // // memberSelp->access(VAccess::WRITE) is handled implicitly by Verilator during V3LinkLValue
-                        // AstAssign* assignp = new AstAssign{
-                        //     nodep->fileline(),
-                        //     memberSelp,
-                        //     newRefp
-                        // };
-
-
-                        // callFromp->varp()->fileline()->modifyWarnOff(V3ErrorCode::UNOPTFLAT, true);
-
-                        // // m_scopep->prependBlocksp(assignp);
-                        // refp->backp()->addHereThisAsNext(assignp);
-                        
                     }
                 }
             } else if (AstVar* varpInFunc = VN_CAST(p, Var)) {  // The variable is declared in the
@@ -1730,16 +1659,6 @@ class TaskVisitor final : public VNVisitor {
                     AstVar* memberVarp = nullptr;
                     // If we haven't emum over this node yet
                     if (!varRefp->varp()->user3p()) {
-                        // newVarp = new AstVar{varRefp->fileline(), VVarType::PORT,
-                        //                      varRefp->name() + "_REF", varRefp->dtypep()};
-                        // newVarp->funcLocal(true);
-                        // newVarp->funcReturn(false);
-                        // newVarp->direction(VDirection::REF);
-
-                        // methodp->addArgsp(newVarp);
-                        // newvscp = new AstVarScope{newVarp->fileline(), m_scopep->aboveScopep(),
-                        //                           newVarp};
-                        // m_scopep->addVarsp(newvscp);
 
                         AstNodeModule* modp = m_scopep->modp();
                         AstClass* classp = VN_CAST(modp, Class);
@@ -1768,8 +1687,7 @@ class TaskVisitor final : public VNVisitor {
                         memberVarp = newvscp->varp();
                     }
                     unsetUser3p.push_back(varRefp->varp());
-                    // Replace all lhsp of this AssignNode with the varible that is passed by
-                    // reference
+                    varRefp->varp()->sigPublic(true);
                     AstVarRef* oldVarRefp = varRefp;
                     AstVarRef* newArgRefp
                         = new AstVarRef{oldVarRefp->fileline(), memberVarp, VAccess::READWRITE};
