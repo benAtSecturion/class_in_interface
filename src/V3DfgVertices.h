@@ -237,12 +237,14 @@ class DfgAstRd final : public DfgVertexAst {
     DfgInlineEdgeStorage<1> m_inputs{this};  // Input edges
     const bool m_inSenItem;  // Reference is in a sensitivity list
     const bool m_inLoop;  // Reference is in a loop
+    const bool m_keepRef;  // Reference must not be replaced by the variable's value
 
 public:
-    DfgAstRd(DfgGraph& dfg, AstNodeExpr* exprp, bool inSenItem, bool inLoop)
+    DfgAstRd(DfgGraph& dfg, AstNodeExpr* exprp, bool inSenItem, bool inLoop, bool keepRef = false)
         : DfgVertexAst{dfg, dfgType(), exprp, m_inputs.m_edges, 1}
         , m_inSenItem{inSenItem}
-        , m_inLoop{inLoop} {}
+        , m_inLoop{inLoop}
+        , m_keepRef{keepRef} {}
     ASTGEN_MEMBERS_DfgAstRd;
 
     DfgVertex* srcp() const { return inputp(0); }
@@ -250,6 +252,7 @@ public:
     std::string srcName(size_t) const override final { return ""; }
     bool inSenItem() const { return m_inSenItem; }
     bool inLoop() const { return m_inLoop; }
+    bool keepRef() const { return m_keepRef; }
 };
 
 //------------------------------------------------------------------------------

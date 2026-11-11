@@ -66,7 +66,10 @@ class AstToDfgAddAstRefs final : public VNVisitorConst {
         if (!varp) return;
         // Create Ast reference vertices
         if (nodep->access().isReadOnly()) {
-            DfgAstRd* const astp = new DfgAstRd{m_dfg, nodep, m_inSenItem, m_inLoop};
+            // A reference-member binding argument is bound by address, so it
+            // must stay a reference and not be replaced by the variable's value
+            const bool keepRef = VN_IS(nodep->backp(), CNew);
+            DfgAstRd* const astp = new DfgAstRd{m_dfg, nodep, m_inSenItem, m_inLoop, keepRef};
             astp->srcp(varp);
             return;
         }
