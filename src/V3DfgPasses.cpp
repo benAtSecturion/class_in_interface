@@ -167,19 +167,19 @@ void V3DfgPasses::inlineVars(DfgGraph& dfg) {
     for (DfgVertexVar& vtx : dfg.varVertices()) {
         // Nothing to inline it into
         if (!vtx.hasSinks()) continue;
-        // // Do not inline a variable whose storage is aliased by a reference member
-        // // (a keepRef read); the reference needs the variable itself
-        // bool aliased = false;
-        // vtx.foreachSink([&](DfgVertex& snk) {
-        //     if (const DfgAstRd* const rVtxp = snk.cast<DfgAstRd>()) {
-        //         if (rVtxp->keepRef()) {
-        //             aliased = true;
-        //             return true;
-        //         }
-        //     }
-        //     return false;
-        // });
-        // if (aliased) continue;
+        // Do not inline a variable whose storage is aliased by a reference member
+        // (a keepRef read); the reference needs the variable itself
+        bool aliased = false;
+        vtx.foreachSink([&](DfgVertex& snk) {
+            if (const DfgAstRd* const rVtxp = snk.cast<DfgAstRd>()) {
+                if (rVtxp->keepRef()) {
+                    aliased = true;
+                    return true;
+                }
+            }
+            return false;
+        });
+        if (aliased) continue;
         // Nohting to inline
         DfgVertex* const srcp = vtx.srcp();
         if (!srcp) continue;
