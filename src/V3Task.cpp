@@ -838,7 +838,9 @@ class TaskVisitor final : public VNVisitor {
                     correctScopep = ccallFromp->varScopep()->scopep(); 
                      AstClassRefDType* const classDtypep
                         = VN_CAST(ccallFromp->varp()->dtypep()->skipRefp(), ClassRefDType);
-                    classp = classDtypep->classp();
+                    // Not a class handle (e.g. an interface function called on
+                    // an interface instance), so there are no ref members
+                    classp = classDtypep ? classDtypep->classp() : nullptr;
                 }
                 else{
                     classp = VN_CAST(m_scopep->modp(), Class);
@@ -2904,11 +2906,75 @@ std::string V3Task::assignDpiToInternal(const std::string& lhsName, AstVar* varp
     return statements;
 }
 
+//######################################################################
+// Add to each AstCNew the arguments binding the class's reference members
+// (created by TaskVisitor::methodBodyRefs) to the scope variables they
+// alias. Runs after TaskVisitor so all reference members exist. The
+// arguments are VarRefs, not emitted text, so V3Descope resolves them in
+// the final function context and each object binds its own instance's
+// variables.
+
+class NewRefBindVisitor final : public VNVisitor {
+    // STATE
+    const AstCFunc* m_cfuncp = nullptr;  // Current function
+
+    // METHODS
+    static AstScope* newObjectScopep(const AstCNew* cnewp) {
+        // If the object is assigned to a handle variable, the handle's scope
+        // is where the object, and so its aliased targets, live.
+        if (const AstAssign* const assignp = VN_CAST(cnewp->backp(), Assign)) {
+            if (const AstNodeVarRef* const lhsp = VN_CAST(assignp->lhsp(), NodeVarRef)) {
+                if (lhsp->varScopep()) return lhsp->varScopep()->scopep();
+            }
+        }
+        return nullptr;
+    }
+
+    void visit(AstCFunc* nodep) override {
+        VL_RESTORER(m_cfuncp);
+        m_cfuncp = nodep;
+        iterateChildren(nodep);
+    }
+    void visit(AstCNew* nodep) override {
+        iterateChildren(nodep);
+        if (VN_IS(nodep->dtypep(), VoidDType)) return;  // super.new, no new object
+        if (!nodep->funcp()->scopep()) return;
+        const AstClass* const classp = VN_CAST(nodep->funcp()->scopep()->modp(), Class);
+        if (!classp) return;
+        AstScope* startScopep = newObjectScopep(nodep);
+        if (!startScopep && m_cfuncp) startScopep = m_cfuncp->scopep();
+        for (AstNode* const memberp : classp->memberspList()) {
+            AstVar* const mvarp = VN_CAST(memberp, Var);
+            if (!mvarp || !mvarp->isClassRefMember()) continue;
+            AstVarScope* targetVscp = nullptr;
+            for (AstScope* scopep = startScopep; scopep && !targetVscp;
+                 scopep = scopep->aboveScopep()) {
+                for (AstVarScope* const vscp : scopep->varspList()) {
+                    if (vscp->varp()->name() == mvarp->name()
+                        && !vscp->varp()->isClassRefMember()) {
+                        targetVscp = vscp;
+                        break;
+                    }
+                }
+            }
+            UASSERT_OBJ(targetVscp, nodep, "Reference member '" << mvarp->name()
+                                                                << "' has no aliased variable");
+            nodep->addArgsp(new AstVarRef{nodep->fileline(), targetVscp, VAccess::READ});
+        }
+    }
+    void visit(AstNode* nodep) override { iterateChildren(nodep); }
+
+public:
+    // CONSTRUCTORS
+    explicit NewRefBindVisitor(AstNetlist* nodep) { iterate(nodep); }
+};
+
 void V3Task::taskAll(AstNetlist* nodep) {
     UINFO(2, __FUNCTION__ << ":");
     {
         TaskStateVisitor visitors{nodep};
         const TaskVisitor visitor{nodep, &visitors};
+        NewRefBindVisitor{nodep};
     }  // Destruct before checking
     { TaskIfaceSensVisitor{nodep}; }
     V3Global::dumpCheckGlobalTree("task", 0, dumpTreeEitherLevel() >= 3);

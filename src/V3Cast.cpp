@@ -221,7 +221,14 @@ class CastVisitor final : public VNVisitor {
         }
     }
     void visit(AstVarRef* nodep) override {
-        const AstNode* const backp = nodep->backp();
+        const AstNode* backp = nodep->backp();
+        // backp() of a non-first list element is the previous sibling; for
+        // call arguments (bound by reference by AstCNew) see through it
+        if (backp && backp->nextp() == nodep) {
+            const AstNode* listp = nodep;
+            while (listp->backp() && listp->backp()->nextp() == listp) listp = listp->backp();
+            if (VN_IS(listp->backp(), NodeCCall)) backp = listp->backp();
+        }
         if (nodep->access().isReadOnly() && VN_IS(backp, NodeExpr) && !VN_IS(backp, CCast)
             && !VN_IS(backp, NodeCCall) && !VN_IS(backp, CMethodHard) && !VN_IS(backp, SFormatF)
             && !VN_IS(backp, ArraySel) && !VN_IS(backp, StructSel) && !VN_IS(backp, RedXor)
