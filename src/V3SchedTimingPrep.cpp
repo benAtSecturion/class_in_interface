@@ -148,6 +148,17 @@ class ExternalDomainsVisitor final : public VNVisitorConst {
     // Add an edge from m_vtxp (current body) to the given vertex
     void addEdge(Vertex* const vtxp) { new V3GraphEdge{&m_graph, m_vtxp, vtxp, 1}; }
 
+    // A MEMBER_REF member is bound at construction to the same-named variable in the
+    // scope enclosing the class; a write through the reference lands on that variable.
+    static AstVarScope* refMemberAliasp(AstVarScope* const vscp) {
+        AstScope* const abovep = vscp->scopep()->aboveScopep();
+        if (!abovep) return nullptr;
+        for (AstVarScope* const aliasVscp : abovep->varspList()) {
+            if (aliasVscp->varp()->name() == vscp->varp()->name()) return aliasVscp;
+        }
+        return nullptr;
+    }
+
     // Contract each strongly connected component of the call graph (direct or mutual recursion,
     // including through forks) into a single vertex. This effectively treats the whole SCC as a
     // single body of code.
@@ -276,6 +287,14 @@ class ExternalDomainsVisitor final : public VNVisitorConst {
     void visit(AstNodeVarRef* nodep) override {
         if (!m_vtxp) return;  // Not in suspendable code, or outside processes/functions
         if (nodep->access().isWriteOrRW() && !nodep->varp()->ignoreSchedWrite()) {
+            if (nodep->varp()->isClassRefMember()) {
+                // The reference member itself is not memory; the write reaches the
+                // aliased enclosing-scope variable, which is what consumers observe.
+                if (AstVarScope* const aliasVscp = refMemberAliasp(nodep->varScopep())) {
+                    m_vtxp->m_writes.insert(aliasVscp);
+                    return;
+                }
+            }
             m_vtxp->m_writes.insert(nodep->varScopep());
         }
     }

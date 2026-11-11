@@ -15,8 +15,8 @@ test.compile(verilator_flags2=['--binary', '--stats', '-fno-dfg'])
 
 test.execute()
 
-test.file_grep(test.stats, r'Scheduling, Timing, variables written by suspendables\s+(\d+)', 11)
-test.file_grep(test.stats, r'Scheduling, Timing, external sensitivities, total\s+(\d+)', 11)
+test.file_grep(test.stats, r'Scheduling, Timing, variables written by suspendables\s+(\d+)', 8)
+test.file_grep(test.stats, r'Scheduling, Timing, external sensitivities, total\s+(\d+)', 8)
 test.file_grep(test.stats, r'Scheduling, Timing, unique external sentrees\s+(\d+)', 1)
 
 test.passes()

@@ -414,19 +414,6 @@ public:
         m_lazyDecls.emit(nodep);
         if (nodep->ifdef() != "") putns(nodep, "#ifdef " + nodep->ifdef() + "\n");
 
-        // Add member refs to 
-        // if(nodep->isConstructor() && VN_IS(nodep->scopep()->modp(), Class)){
-        //     std::vector<AstVar*> memberRefs;
-        //     for(AstNode* classMemberp = nodep->scopep()->modp()->op1p(); classMemberp; classMemberp = classMemberp->nextp()){
-        //         if(AstVar* varp = VN_CAST(classMemberp, Var)){
-        //             if(varp->varType() == VVarType::MEMBER_REF){
-        //                 memberRefs.push_back(varp);
-        //             }
-        //         }
-        //     }
-        // }
-        // else{
-        // }
         emitCFuncHeader(nodep, m_modp, /* withScope: */ true);
 
         puts(" {\n");

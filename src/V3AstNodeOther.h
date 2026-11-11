@@ -2685,6 +2685,7 @@ public:
     bool isWiredNet() const { return varType().isWiredNet(); }
     bool isTemp() const { return varType().isTemp(); }
     bool isClassMember() const { return varType() == VVarType::MEMBER; }
+    bool isClassRefMember() const { return varType() == VVarType::MEMBER_REF; }
     bool isVirtIface() const {
         if (AstIfaceRefDType* const dtp = VN_CAST(dtypep(), IfaceRefDType)) {
             return dtp->isVirtual();
@@ -2775,7 +2776,7 @@ public:
     void combineType(const AstVar* otherp);
     bool needsCReset() const {
         return !isIfaceParent() && !isIfaceRef() && !noReset() && !isParam() && !isStatementTemp()
-               && !noCReset() && !(basicp() && basicp()->isEvent());
+               && !noCReset() && !(basicp() && basicp()->isEvent());// && !isClassRefMember();
     }
     static AstVar* scVarRecurse(AstNode* nodep);
 };

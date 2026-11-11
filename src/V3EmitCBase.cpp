@@ -172,12 +172,29 @@ void EmitCBaseVisitorConst::emitCFuncHeader(const AstCFunc* funcp, const AstNode
             }
         }
         if(memberRefs.size() > 0) puts(", ");
+        
         for(size_t i = 0; i < memberRefs.size(); ++i){
             puts(memberRefs[i]->dtypep()->cType("", false, false)); // TODO this doesn't take into account packed variables
             puts(memberRefs[i]->name() + "_REF");
+            if(!withScope){
+                AstNodeDType* dtypep = memberRefs[i]->dtypep()->skipRefp();
+                if (VN_IS(dtypep, BasicDType)) {
+                    puts(" = 0");
+                } 
+                else if (VN_IS(dtypep, UnpackArrayDType)) {
+                    puts(" = {}");
+                } 
+                else if (dtypep->isString()) {
+                    puts(" = \"\"");
+                }
+                else {
+                    puts(" = {}");
+                }
+            }
             if(i != memberRefs.size() - 1){
                 puts(", ");
             }
+            
         }
     }
     puts(")");
@@ -185,10 +202,10 @@ void EmitCBaseVisitorConst::emitCFuncHeader(const AstCFunc* funcp, const AstNode
 }
 
 void EmitCBaseVisitorConst::emitCFuncDecl(const AstCFunc* funcp, const AstNodeModule* modp,
-                                          bool cLinkage) {
+                                          bool cLinkage, bool emitDefaultConstructor) {
     ensureNewLine();
     if (!funcp->ifdef().empty()) putns(funcp, "#ifdef " + funcp->ifdef() + "\n");
-    if (funcp->isConstructor()) emitCDefaultConstructor(modp);
+    if (funcp->isConstructor() && emitDefaultConstructor) emitCDefaultConstructor(modp);
     if (cLinkage) putns(funcp, "extern \"C\" ");
     if (funcp->isStatic() && funcp->isProperMethod()) putns(funcp, "static ");
     if (funcp->isVirtual()) {

@@ -649,7 +649,7 @@ class EmitCHeader final : public EmitCBaseVisitorConst {
         for (const AstCFunc* const funcp : funcsp) {
             if (inClassBody) ofp()->putsPrivate(funcp->declPrivate());
             if(funcp->isConstructor() && VN_IS(modp, Class)){
-
+                const AstClass* classp = VN_CAST(modp, Class);
                 std::vector<AstVar*> memberRefs;
                 for(AstNode* classMemberp = modp->op1p(); classMemberp; classMemberp = classMemberp->nextp()){
                     if(AstVar* varp = VN_CAST(classMemberp, Var)){
@@ -658,11 +658,13 @@ class EmitCHeader final : public EmitCBaseVisitorConst {
                         }
                     }
                 }
-                if(memberRefs.size() == 0){
+                puts(EmitCUtil::prefixNameProtect(modp));
+                if(memberRefs.size() == 0){ // Keep the signiture the same between init and constructor.
+                    puts("(" + cFuncArgs(funcp) + ")");
+                    puts("{}");
                     emitCFuncDecl(funcp, modp);
                     continue;
                 }
-                puts(EmitCUtil::prefixNameProtect(modp));
                 puts("(" + cFuncArgs(funcp) + ", ");
                 for(size_t i = 0; i < memberRefs.size(); ++i){
                     puts(memberRefs[i]->dtypep()->cType("", false, false)); // TODO this doesn't take into account packed variables
@@ -676,6 +678,34 @@ class EmitCHeader final : public EmitCBaseVisitorConst {
                     }
                 }
                 puts(" : ");
+                if (classp->extendsp()) {
+                    bool needComma = false;
+                    for (const AstClassExtends* const extp : classp->extendspList()) {
+                        std::vector<AstVar*> extendsMemberRefs;
+                        if (needComma) puts(", ");
+                        // Use virtual only for interfaces for class inheritance
+                        // (extends)
+                        putns(extp, EmitCUtil::prefixNameProtect(extp->classp()));
+                        puts("(");
+                        for(AstNode* classMemberp = extp->classp()->op1p(); classMemberp; classMemberp = classMemberp->nextp()){
+                            if(AstVar* varp = VN_CAST(classMemberp, Var)){
+                                if(varp->varType() == VVarType::MEMBER_REF){
+                                    extendsMemberRefs.push_back(varp);
+                                }
+                            }
+                        }
+                        if(extendsMemberRefs.size() > 0){
+                            puts("vlSymsp");
+                            for(size_t i = 0; i < extendsMemberRefs.size(); ++i){
+                                    puts(", ");
+                                    puts(extendsMemberRefs[i]->name() + "_REF");
+                            }
+                        }
+                        puts(")");
+                        needComma = true;
+                    }
+                    if (needComma) puts(", ");
+                }
                 for(size_t i = 0; i < memberRefs.size(); ++i){
                     puts(memberRefs[i]->name());
                     puts("(");
@@ -689,8 +719,8 @@ class EmitCHeader final : public EmitCBaseVisitorConst {
                     }
                 }
                 puts("\n");
-                // emit init correctly with added variables
                 emitCFuncHeader(funcp, modp, /* withScope: */ false);
+                puts(";");
                 // puts("void ");
                 // putns(funcp, funcNameProtect(funcp, modp));
                 // puts("(" + cFuncArgs(funcp) + ", ");
@@ -704,7 +734,7 @@ class EmitCHeader final : public EmitCBaseVisitorConst {
                 //         puts(", ");
                 //     }
                 // }
-                puts(";");
+                
                 continue;
             }
             emitCFuncDecl(funcp, modp);

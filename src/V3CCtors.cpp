@@ -91,6 +91,13 @@ public:
         m_newFunctions.back()->addStmtsp(nodep);
         m_numStmts += 1;
     }
+    void add_empty() {
+        if (m_newFunctions.empty()) m_newFunctions.push_back(makeNewFunc());
+        if (v3Global.opt.outputSplitCFuncs() && m_numStmts > v3Global.opt.outputSplitCFuncs()) {
+            m_newFunctions.push_back(makeNewFunc());
+        }
+        m_numStmts += 1;
+    }
 
     V3CCtorsBuilder(AstNodeModule* nodep, const string& basename, VCtorType type)
         : m_modp{nodep}
@@ -205,7 +212,10 @@ class CCtorsVisitor final : public VNVisitor {
         iterateChildren(nodep);
     }
     void visit(AstVar* nodep) override {
-        if (nodep->needsCReset()) {
+        if(nodep->varType() == VVarType::MEMBER_REF){
+            m_varResetp->add_empty();
+        }
+        else if (nodep->needsCReset()) {
             AstNode* const crstp = new AstAssign{
                 nodep->fileline(), new AstVarRef{nodep->fileline(), nodep, VAccess::WRITE},
                 new AstCReset{nodep->fileline(), nodep, true}};
