@@ -1596,7 +1596,7 @@ class TaskVisitor final : public VNVisitor {
             // If an Assign in the method refences a variable one scope above itself then pass it
             // by reference
             if (varRefp && varRefp->varScopep()) {
-                if (varRefp->varScopep()->scopep()->name() == scopep->name() && !(varRefp->varp()->basicp() && varRefp->varp()->basicp()->isEvent())
+                if ( (varRefp->varScopep()->scopep()->name() == scopep->name() && !(varRefp->varp()->basicp() && varRefp->varp()->basicp()->isEvent()))
                     || varRefp->varp()->user1()) {
                     if (!varRefp->varp()->user3p()) {
                         varRefp->varp()->user3p(varRefp->varp());
