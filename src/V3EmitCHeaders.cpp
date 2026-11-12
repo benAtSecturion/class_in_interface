@@ -648,104 +648,69 @@ class EmitCHeader final : public EmitCBaseVisitorConst {
 
         for (const AstCFunc* const funcp : funcsp) {
             if (inClassBody) ofp()->putsPrivate(funcp->declPrivate());
-            if(funcp->isConstructor() && VN_IS(modp, Class)){
-                const AstClass* classp = VN_CAST(modp, Class);
-                std::vector<AstVar*> memberRefs;
-                for(AstNode* classMemberp = modp->op1p(); classMemberp; classMemberp = classMemberp->nextp()){
-                    if(AstVar* varp = VN_CAST(classMemberp, Var)){
-                        if(varp->varType() == VVarType::MEMBER_REF){
-                            memberRefs.push_back(varp);
-                        }
-                    }
+            if (funcp->isConstructor() && VN_IS(modp, Class)) {
+                const AstClass* const classp = VN_CAST(modp, Class);
+                // AstCNew binds reference members by position, so constructor
+                // parameters are sorted by name, independent of member-list
+                // order, while the mem-initializer-list stays in declaration
+                // order or compilers flag it with -Wreorder.
+                std::vector<AstVar*> declRefs;
+                for (AstNode* memberp = classp->op1p(); memberp; memberp = memberp->nextp()) {
+                    AstVar* const varp = VN_CAST(memberp, Var);
+                    if (varp && varp->isClassRefMember()) declRefs.push_back(varp);
                 }
-                // The mem-initializer-list must run in declaration order or C++
-                // compilers warn (and -Wreorder errors) about the order of
-                // initialization, so keep a copy in member-declaration order.
-                const std::vector<AstVar*> memberRefDeclOrder = memberRefs;
-                // Sorted by name to match the AstCNew argument list binding order,
-                // independent of any reordering of the class member list.
-                std::sort(memberRefs.begin(), memberRefs.end(),
-                          [](const AstVar* ap, const AstVar* bp) { return ap->name() < bp->name(); });
+                const auto byName = [](const AstVar* ap, const AstVar* bp) VL_PURE {
+                    return ap->name() < bp->name();
+                };
+                std::vector<AstVar*> paramRefs = declRefs;
+                std::sort(paramRefs.begin(), paramRefs.end(), byName);
                 puts(EmitCUtil::prefixNameProtect(modp));
-                if(memberRefs.size() == 0){ // Keep the signiture the same between init and constructor.
+                if (paramRefs.empty()) {  // Keep the signature same between init and constructor
                     puts("(" + cFuncArgs(funcp) + ")");
                     puts("{}");
                     emitCFuncDecl(funcp, modp);
                     continue;
                 }
                 puts("(" + cFuncArgs(funcp) + ", ");
-                for(size_t i = 0; i < memberRefs.size(); ++i){
-                    puts(memberRefs[i]->dtypep()->cType("", false, false)); // TODO this doesn't take into account packed variables
+                for (size_t i = 0; i < paramRefs.size(); ++i) {
+                    puts(paramRefs[i]->dtypep()->cType("", false, false));  // TODO packed vars
                     puts("& ");
-                    puts(memberRefs[i]->name() + "_REF");
-                    if(i == memberRefs.size() - 1){
-                        puts(")");
-                    }
-                    else{
-                        puts(",");
-                    }
+                    puts(paramRefs[i]->name() + "_REF");
+                    puts(i + 1 == paramRefs.size() ? ")" : ",");
                 }
                 puts(" : ");
                 if (classp->extendsp()) {
                     bool needComma = false;
                     for (const AstClassExtends* const extp : classp->extendspList()) {
-                        std::vector<AstVar*> extendsMemberRefs;
                         if (needComma) puts(", ");
                         // Use virtual only for interfaces for class inheritance
                         // (extends)
                         putns(extp, EmitCUtil::prefixNameProtect(extp->classp()));
                         puts("(");
-                        for(AstNode* classMemberp = extp->classp()->op1p(); classMemberp; classMemberp = classMemberp->nextp()){
-                            if(AstVar* varp = VN_CAST(classMemberp, Var)){
-                                if(varp->varType() == VVarType::MEMBER_REF){
-                                    extendsMemberRefs.push_back(varp);
-                                }
-                            }
+                        // Base class takes its parameters in the same sorted order
+                        std::vector<AstVar*> baseRefs;
+                        for (AstNode* memberp = extp->classp()->op1p(); memberp;
+                             memberp = memberp->nextp()) {
+                            AstVar* const varp = VN_CAST(memberp, Var);
+                            if (varp && varp->isClassRefMember()) baseRefs.push_back(varp);
                         }
-                        // Match the base class constructor's name-sorted parameter order
-                        std::sort(extendsMemberRefs.begin(), extendsMemberRefs.end(),
-                                  [](const AstVar* ap, const AstVar* bp) { return ap->name() < bp->name(); });
-                        if(extendsMemberRefs.size() > 0){
+                        std::sort(baseRefs.begin(), baseRefs.end(), byName);
+                        if (!baseRefs.empty()) {
                             puts("vlSymsp");
-                            for(size_t i = 0; i < extendsMemberRefs.size(); ++i){
-                                    puts(", ");
-                                    puts(extendsMemberRefs[i]->name() + "_REF");
-                            }
+                            for (AstVar* const varp : baseRefs) puts(", " + varp->name() + "_REF");
                         }
                         puts(")");
                         needComma = true;
                     }
                     if (needComma) puts(", ");
                 }
-                for(size_t i = 0; i < memberRefDeclOrder.size(); ++i){
-                    puts(memberRefDeclOrder[i]->name());
-                    puts("(");
-                    puts(memberRefDeclOrder[i]->name() + "_REF");
-                    puts(")");
-                    if(i == memberRefDeclOrder.size() - 1){
-                        puts("{}");
-                    }
-                    else{
-                        puts(", ");
-                    }
+                for (size_t i = 0; i < declRefs.size(); ++i) {
+                    puts(declRefs[i]->name() + "(" + declRefs[i]->name() + "_REF)");
+                    puts(i + 1 == declRefs.size() ? "{}" : ", ");
                 }
                 puts("\n");
                 emitCFuncHeader(funcp, modp, /* withScope: */ false);
                 puts(";");
-                // puts("void ");
-                // putns(funcp, funcNameProtect(funcp, modp));
-                // puts("(" + cFuncArgs(funcp) + ", ");
-                // for(size_t i = 0; i < memberRefs.size(); ++i){
-                //     puts(memberRefs[i]->dtypep()->cType("", false, false)); // TODO this doesn't take into account packed variables
-                //     puts(memberRefs[i]->name() + "_REF");
-                //     if(i == memberRefs.size() - 1){
-                //         puts(")");
-                //     }
-                //     else{
-                //         puts(", ");
-                //     }
-                // }
-
                 continue;
             }
             emitCFuncDecl(funcp, modp);
