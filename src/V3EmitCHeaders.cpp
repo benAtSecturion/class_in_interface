@@ -658,6 +658,10 @@ class EmitCHeader final : public EmitCBaseVisitorConst {
                         }
                     }
                 }
+                // The mem-initializer-list must run in declaration order or C++
+                // compilers warn (and -Wreorder errors) about the order of
+                // initialization, so keep a copy in member-declaration order.
+                const std::vector<AstVar*> memberRefDeclOrder = memberRefs;
                 // Sorted by name to match the AstCNew argument list binding order,
                 // independent of any reordering of the class member list.
                 std::sort(memberRefs.begin(), memberRefs.end(),
@@ -713,12 +717,12 @@ class EmitCHeader final : public EmitCBaseVisitorConst {
                     }
                     if (needComma) puts(", ");
                 }
-                for(size_t i = 0; i < memberRefs.size(); ++i){
-                    puts(memberRefs[i]->name());
+                for(size_t i = 0; i < memberRefDeclOrder.size(); ++i){
+                    puts(memberRefDeclOrder[i]->name());
                     puts("(");
-                    puts(memberRefs[i]->name() + "_REF");
+                    puts(memberRefDeclOrder[i]->name() + "_REF");
                     puts(")");
-                    if(i == memberRefs.size() - 1){
+                    if(i == memberRefDeclOrder.size() - 1){
                         puts("{}");
                     }
                     else{
