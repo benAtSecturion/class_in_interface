@@ -187,14 +187,6 @@ class VariableOrder final {
                     portps.push_back(varp);
                     continue;
                 }
-                if (varp->isClassRefMember()) {
-                    // Class reference members are bound positionally, in declaration
-                    // order, by the class constructor and its AstCNew argument lists.
-                    // A reference always occupies one pointer, so stratum sorting by
-                    // the referenced dtype is meaningless; keep their order pinned.
-                    restps.push_back(varp);
-                    continue;
-                }
                 if (!varp->isModelState()) {
                     restps.push_back(varp);
                     continue;

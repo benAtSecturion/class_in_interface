@@ -2943,9 +2943,16 @@ class NewRefBindVisitor final : public VNVisitor {
         if (!classp) return;
         AstScope* startScopep = newObjectScopep(nodep);
         if (!startScopep && m_cfuncp) startScopep = m_cfuncp->scopep();
+        std::vector<AstVar*> refMembers;
         for (AstNode* const memberp : classp->memberspList()) {
             AstVar* const mvarp = VN_CAST(memberp, Var);
-            if (!mvarp || !mvarp->isClassRefMember()) continue;
+            if (mvarp && mvarp->isClassRefMember()) refMembers.push_back(mvarp);
+        }
+        // Sorted by name to match the constructor parameter order emitted by
+        // EmitC, independent of any reordering of the class member list.
+        std::sort(refMembers.begin(), refMembers.end(),
+                  [](const AstVar* ap, const AstVar* bp) { return ap->name() < bp->name(); });
+        for (AstVar* const mvarp : refMembers) {
             AstVarScope* targetVscp = nullptr;
             for (AstScope* scopep = startScopep; scopep && !targetVscp;
                  scopep = scopep->aboveScopep()) {

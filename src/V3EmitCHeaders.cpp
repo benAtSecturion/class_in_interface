@@ -658,6 +658,10 @@ class EmitCHeader final : public EmitCBaseVisitorConst {
                         }
                     }
                 }
+                // Sorted by name to match the AstCNew argument list binding order,
+                // independent of any reordering of the class member list.
+                std::sort(memberRefs.begin(), memberRefs.end(),
+                          [](const AstVar* ap, const AstVar* bp) { return ap->name() < bp->name(); });
                 puts(EmitCUtil::prefixNameProtect(modp));
                 if(memberRefs.size() == 0){ // Keep the signiture the same between init and constructor.
                     puts("(" + cFuncArgs(funcp) + ")");
@@ -694,6 +698,9 @@ class EmitCHeader final : public EmitCBaseVisitorConst {
                                 }
                             }
                         }
+                        // Match the base class constructor's name-sorted parameter order
+                        std::sort(extendsMemberRefs.begin(), extendsMemberRefs.end(),
+                                  [](const AstVar* ap, const AstVar* bp) { return ap->name() < bp->name(); });
                         if(extendsMemberRefs.size() > 0){
                             puts("vlSymsp");
                             for(size_t i = 0; i < extendsMemberRefs.size(); ++i){

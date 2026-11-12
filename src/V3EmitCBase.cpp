@@ -20,6 +20,9 @@
 
 #include "V3Task.h"
 
+#include <algorithm>
+#include <vector>
+
 //######################################################################
 // EmitCParentModule implementation
 
@@ -159,7 +162,9 @@ void EmitCBaseVisitorConst::emitCFuncHeader(const AstCFunc* funcp, const AstNode
     puts("(" + cFuncArgs(funcp));
 
     
-    // Bind the refernce members to the new class
+    // Bind the reference members to the new class. Sorted by name so the parameter
+    // order is stable no matter how the class member list gets reordered; the AstCNew
+    // argument lists bind positionally and use the same sort.
     if(funcp->scopep() && funcp->isConstructor()){
         std::vector<AstVar*> memberRefs;
         if(AstClass* const classp = VN_CAST(funcp->scopep()->modp(), Class)){
@@ -171,6 +176,8 @@ void EmitCBaseVisitorConst::emitCFuncHeader(const AstCFunc* funcp, const AstNode
                 }
             }
         }
+        std::sort(memberRefs.begin(), memberRefs.end(),
+                  [](const AstVar* ap, const AstVar* bp) { return ap->name() < bp->name(); });
         if(memberRefs.size() > 0) puts(", ");
         
         for(size_t i = 0; i < memberRefs.size(); ++i){
