@@ -680,27 +680,33 @@ class EmitCHeader final : public EmitCBaseVisitorConst {
                 }
                 puts(" : ");
                 if (classp->extendsp()) {
+                    // Virtual bases initialize before non-virtual direct bases,
+                    // so emit the base mem-initializers virtual-first.
                     bool needComma = false;
-                    for (const AstClassExtends* const extp : classp->extendspList()) {
-                        if (needComma) puts(", ");
-                        // Use virtual only for interfaces for class inheritance
-                        // (extends)
-                        putns(extp, EmitCUtil::prefixNameProtect(extp->classp()));
-                        puts("(");
-                        // Base class takes its parameters in the same sorted order
-                        std::vector<AstVar*> baseRefs;
-                        for (AstNode* memberp = extp->classp()->op1p(); memberp;
-                             memberp = memberp->nextp()) {
-                            AstVar* const varp = VN_CAST(memberp, Var);
-                            if (varp && varp->isClassRefMember()) baseRefs.push_back(varp);
+                    for (const bool virtualPass : {true, false}) {
+                        for (const AstClassExtends* const extp : classp->extendspList()) {
+                            if (extp->classp()->useVirtualPublic() != virtualPass) continue;
+                            if (needComma) puts(", ");
+                            needComma = true;
+                            // Use virtual only for interfaces for class inheritance
+                            // (extends)
+                            putns(extp, EmitCUtil::prefixNameProtect(extp->classp()));
+                            puts("(");
+                            // Base class takes its parameters in the same sorted order
+                            std::vector<AstVar*> baseRefs;
+                            for (AstNode* memberp = extp->classp()->op1p(); memberp;
+                                 memberp = memberp->nextp()) {
+                                AstVar* const varp = VN_CAST(memberp, Var);
+                                if (varp && varp->isClassRefMember()) baseRefs.push_back(varp);
+                            }
+                            std::sort(baseRefs.begin(), baseRefs.end(), byName);
+                            if (!baseRefs.empty()) {
+                                puts("vlSymsp");
+                                for (AstVar* const varp : baseRefs)
+                                    puts(", " + varp->name() + "_REF");
+                            }
+                            puts(")");
                         }
-                        std::sort(baseRefs.begin(), baseRefs.end(), byName);
-                        if (!baseRefs.empty()) {
-                            puts("vlSymsp");
-                            for (AstVar* const varp : baseRefs) puts(", " + varp->name() + "_REF");
-                        }
-                        puts(")");
-                        needComma = true;
                     }
                     if (needComma) puts(", ");
                 }
