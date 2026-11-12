@@ -2258,7 +2258,8 @@ public:
     // cppcheck-suppress noExplicitConstructor
     VlClassRef(VlNull) {};
     template <typename... T_Args>
-    VlClassRef(VlDeleter& deleter, T_Args&&... args) : m_objp{new T_Class(args...)} {
+    VlClassRef(VlDeleter& deleter, T_Args&&... args)
+        : m_objp{new T_Class(args...)} {
         // Instantly init the object to presevrve RAII
         m_objp->init(std::forward<T_Args>(args)...);
         m_objp->m_deleterp = &deleter;

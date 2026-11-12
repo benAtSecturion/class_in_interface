@@ -836,19 +836,17 @@ class TaskVisitor final : public VNVisitor {
                 AstClass* classp = nullptr;
                 if (ccallFromp) {
                     correctScopep = ccallFromp->varScopep()->scopep();
-                     AstClassRefDType* const classDtypep
+                    AstClassRefDType* const classDtypep
                         = VN_CAST(ccallFromp->varp()->dtypep()->skipRefp(), ClassRefDType);
                     // Not a class handle (e.g. an interface function called on
                     // an interface instance), so there are no ref members
                     classp = classDtypep ? classDtypep->classp() : nullptr;
-                }
-                else{
+                } else {
                     classp = VN_CAST(m_scopep->modp(), Class);
                 }
                 methodCallArgsRefs(refp->taskp()->op3p(), aboveFuncScopep, ccallp, refp,
                                    unsetUser3p, classp, correctScopep);
-                if(classp)
-                    ccallp->funcp()->user3p(classp);
+                if (classp) ccallp->funcp()->user3p(classp);
             } else if (ccallFromp) {
                 // If the function is a virtual function. Get the final
                 // function not the parent's.
@@ -870,7 +868,8 @@ class TaskVisitor final : public VNVisitor {
                     if (finalTaskp && scopep
                         && (VN_IS(scopep->modp(), Module) || VN_IS(scopep->modp(), Iface))) {
                         ccallFromp->varp()->dtypeFrom(ccallFromp->varp()->user4p());
-                        methodCallArgsRefs(finalTaskp->op3p(), scopep, ccallp, refp, unsetUser3p, classDtypep->classp());
+                        methodCallArgsRefs(finalTaskp->op3p(), scopep, ccallp, refp, unsetUser3p,
+                                           classDtypep->classp());
                         // classDtypep->classp()->user3p(classDtypep);
                         ccallp->funcp()->user3p(ccallp);
                     }
@@ -1589,8 +1588,8 @@ class TaskVisitor final : public VNVisitor {
     }
 
     void methodCallArgsRefs(AstNode* nodep, AstScope* scopep, AstNodeCCall* methodCallp,
-                            AstNodeFTaskRef* refp,  std::vector<AstNode*>& unsetUser3p, AstClass* classp = nullptr,
-                            AstScope* correctScopep = nullptr) {
+                            AstNodeFTaskRef* refp, std::vector<AstNode*>& unsetUser3p,
+                            AstClass* classp = nullptr, AstScope* correctScopep = nullptr) {
         if (!nodep) return;
         for (AstNode* p = nodep; p; p = p->nextp()) {
             AstVarRef* varRefp = VN_CAST(p, VarRef);
@@ -1598,28 +1597,26 @@ class TaskVisitor final : public VNVisitor {
             // If an Assign in the method refences a variable one scope above itself then pass it
             // by reference
             if (varRefp && varRefp->varScopep()) {
-                if ( (varRefp->varScopep()->scopep()->name() == scopep->name() && !(varRefp->varp()->basicp() && varRefp->varp()->basicp()->isEvent()))
+                if ((varRefp->varScopep()->scopep()->name() == scopep->name()
+                     && !(varRefp->varp()->basicp() && varRefp->varp()->basicp()->isEvent()))
                     || varRefp->varp()->user1()) {
                     if (!varRefp->varp()->user3p()) {
                         varRefp->varp()->user3p(varRefp->varp());
                         unsetUser3p.push_back(varRefp->varp());
                         AstVar* memberVarp = nullptr;
-                        if(classp){
-                            for(AstNode* classMembersp = classp->op1p(); classMembersp; classMembersp = classMembersp->nextp()){
-                                if(classMembersp->name() == varRefp->varp()->name()){
+                        if (classp) {
+                            for (AstNode* classMembersp = classp->op1p(); classMembersp;
+                                 classMembersp = classMembersp->nextp()) {
+                                if (classMembersp->name() == varRefp->varp()->name()) {
                                     memberVarp = VN_AS(classMembersp, Var);
                                     break;
                                 }
                             }
-                            if(!memberVarp){
+                            if (!memberVarp) {
                                 // Add a member variable to our classp that holds the signal
                                 // And drive it
-                                memberVarp = new AstVar{
-                                    classp->fileline(),
-                                    VVarType::MEMBER_REF,
-                                    varRefp->name(),
-                                    varRefp->dtypep()
-                                };
+                                memberVarp = new AstVar{classp->fileline(), VVarType::MEMBER_REF,
+                                                        varRefp->name(), varRefp->dtypep()};
                                 memberVarp->direction(VDirection::REF);
                                 memberVarp->dtypeFrom(varRefp->varp());
                                 memberVarp->sigPublic(true);
@@ -1659,7 +1656,8 @@ class TaskVisitor final : public VNVisitor {
             // by refence
             if (varRefp && varRefp->varScopep() && !VN_IS(varRefp->varp()->user3p(), Var)) {
                 if (varRefp->varScopep()->scopep()->name()
-                    == methodp->scopep()->aboveScopep()->name() && !(varRefp->varp()->basicp() && varRefp->varp()->basicp()->isEvent())) {
+                        == methodp->scopep()->aboveScopep()->name()
+                    && !(varRefp->varp()->basicp() && varRefp->varp()->basicp()->isEvent())) {
                     AstVarScope* newvscp;
                     AstVar* memberVarp = nullptr;
                     // If we haven't emum over this node yet
@@ -1667,26 +1665,24 @@ class TaskVisitor final : public VNVisitor {
 
                         AstNodeModule* modp = m_scopep->modp();
                         AstClass* classp = VN_CAST(modp, Class);
-                        for(AstNode* classMembersp = classp->op1p(); classMembersp; classMembersp = classMembersp->nextp()){
-                            if(classMembersp->name() == varRefp->varp()->name()){
+                        for (AstNode* classMembersp = classp->op1p(); classMembersp;
+                             classMembersp = classMembersp->nextp()) {
+                            if (classMembersp->name() == varRefp->varp()->name()) {
                                 memberVarp = VN_AS(classMembersp, Var);
                                 break;
                             }
                         }
-                        if(!memberVarp){
+                        if (!memberVarp) {
                             // Add a member variable to our classp that holds the signal
-                            memberVarp = new AstVar{
-                                classp->fileline(),
-                                VVarType::MEMBER_REF,
-                                varRefp->name(),
-                                varRefp->dtypep()
-                            };
+                            memberVarp = new AstVar{classp->fileline(), VVarType::MEMBER_REF,
+                                                    varRefp->name(), varRefp->dtypep()};
                             memberVarp->direction(VDirection::REF);
                             memberVarp->dtypeFrom(varRefp->varp());
                             memberVarp->sigPublic(true);
                             classp->prependMembersp(memberVarp);
                         }
-                        AstVarScope* memberVscp = new AstVarScope{memberVarp->fileline(), m_scopep, memberVarp};
+                        AstVarScope* memberVscp
+                            = new AstVarScope{memberVarp->fileline(), m_scopep, memberVarp};
                         newvscp = memberVscp;
                         m_scopep->addVarsp(memberVscp);
                         varRefp->varp()->user3p(memberVscp);
@@ -1904,9 +1900,8 @@ class TaskVisitor final : public VNVisitor {
 
         // We are dealing with a pure system verilog class method,
         // where we aren't already doing pass by ref.
-        if (nodep->classMethod() && !nodep->isStatic()
-            && !nodep->isCovergroupSample() && !nodep->dpiImport() && cfuncp
-            && cfuncp->scopep()->aboveScopep()
+        if (nodep->classMethod() && !nodep->isStatic() && !nodep->isCovergroupSample()
+            && !nodep->dpiImport() && cfuncp && cfuncp->scopep()->aboveScopep()
             && (VN_IS(cfuncp->scopep()->aboveScopep()->modp(), Module)
                 || VN_IS(cfuncp->scopep()->aboveScopep()->modp(), Iface))
             && !cfuncp->scopep()
@@ -2964,8 +2959,8 @@ class NewRefBindVisitor final : public VNVisitor {
                     }
                 }
             }
-            UASSERT_OBJ(targetVscp, nodep, "Reference member '" << mvarp->name()
-                                                                << "' has no aliased variable");
+            UASSERT_OBJ(targetVscp, nodep,
+                        "Reference member '" << mvarp->name() << "' has no aliased variable");
             nodep->addArgsp(new AstVarRef{nodep->fileline(), targetVscp, VAccess::READ});
         }
     }

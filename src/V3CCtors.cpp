@@ -212,10 +212,9 @@ class CCtorsVisitor final : public VNVisitor {
         iterateChildren(nodep);
     }
     void visit(AstVar* nodep) override {
-        if(nodep->varType() == VVarType::MEMBER_REF){
+        if (nodep->varType() == VVarType::MEMBER_REF) {
             m_varResetp->add_empty();
-        }
-        else if (nodep->needsCReset()) {
+        } else if (nodep->needsCReset()) {
             AstNode* const crstp = new AstAssign{
                 nodep->fileline(), new AstVarRef{nodep->fileline(), nodep, VAccess::WRITE},
                 new AstCReset{nodep->fileline(), nodep, true}};

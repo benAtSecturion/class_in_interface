@@ -161,47 +161,40 @@ void EmitCBaseVisitorConst::emitCFuncHeader(const AstCFunc* funcp, const AstNode
     putns(funcp, funcNameProtect(funcp, modp));
     puts("(" + cFuncArgs(funcp));
 
-
     // Bind the reference members to the new class. Sorted by name so the parameter
     // order is stable no matter how the class member list gets reordered; the AstCNew
     // argument lists bind positionally and use the same sort.
-    if(funcp->scopep() && funcp->isConstructor()){
+    if (funcp->scopep() && funcp->isConstructor()) {
         std::vector<AstVar*> memberRefs;
-        if(AstClass* const classp = VN_CAST(funcp->scopep()->modp(), Class)){
-            for(AstNode* classMemberp = classp->op1p(); classMemberp; classMemberp = classMemberp->nextp()){
-                if(AstVar* varp = VN_CAST(classMemberp, Var)){
-                    if(varp->varType() == VVarType::MEMBER_REF){
-                        memberRefs.push_back(varp);
-                    }
+        if (AstClass* const classp = VN_CAST(funcp->scopep()->modp(), Class)) {
+            for (AstNode* classMemberp = classp->op1p(); classMemberp;
+                 classMemberp = classMemberp->nextp()) {
+                if (AstVar* varp = VN_CAST(classMemberp, Var)) {
+                    if (varp->varType() == VVarType::MEMBER_REF) { memberRefs.push_back(varp); }
                 }
             }
         }
         std::sort(memberRefs.begin(), memberRefs.end(),
                   [](const AstVar* ap, const AstVar* bp) { return ap->name() < bp->name(); });
-        if(memberRefs.size() > 0) puts(", ");
+        if (memberRefs.size() > 0) puts(", ");
 
-        for(size_t i = 0; i < memberRefs.size(); ++i){
-            puts(memberRefs[i]->dtypep()->cType("", false, false)); // TODO this doesn't take into account packed variables
+        for (size_t i = 0; i < memberRefs.size(); ++i) {
+            puts(memberRefs[i]->dtypep()->cType(
+                "", false, false));  // TODO this doesn't take into account packed variables
             puts(memberRefs[i]->name() + "_REF");
-            if(!withScope){
+            if (!withScope) {
                 AstNodeDType* dtypep = memberRefs[i]->dtypep()->skipRefp();
                 if (VN_IS(dtypep, BasicDType)) {
                     puts(" = 0");
-                }
-                else if (VN_IS(dtypep, UnpackArrayDType)) {
+                } else if (VN_IS(dtypep, UnpackArrayDType)) {
                     puts(" = {}");
-                }
-                else if (dtypep->isString()) {
+                } else if (dtypep->isString()) {
                     puts(" = \"\"");
-                }
-                else {
+                } else {
                     puts(" = {}");
                 }
             }
-            if(i != memberRefs.size() - 1){
-                puts(", ");
-            }
-
+            if (i != memberRefs.size() - 1) { puts(", "); }
         }
     }
     puts(")");

@@ -2776,7 +2776,7 @@ public:
     void combineType(const AstVar* otherp);
     bool needsCReset() const {
         return !isIfaceParent() && !isIfaceRef() && !noReset() && !isParam() && !isStatementTemp()
-               && !noCReset() && !(basicp() && basicp()->isEvent());// && !isClassRefMember();
+               && !noCReset() && !(basicp() && basicp()->isEvent());  // && !isClassRefMember();
     }
     static AstVar* scVarRecurse(AstNode* nodep);
 };

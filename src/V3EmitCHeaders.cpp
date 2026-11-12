@@ -659,9 +659,8 @@ class EmitCHeader final : public EmitCBaseVisitorConst {
                     AstVar* const varp = VN_CAST(memberp, Var);
                     if (varp && varp->isClassRefMember()) declRefs.push_back(varp);
                 }
-                const auto byName = [](const AstVar* ap, const AstVar* bp) VL_PURE {
-                    return ap->name() < bp->name();
-                };
+                const auto byName = [](const AstVar* ap, const AstVar* bp)
+                                        VL_PURE { return ap->name() < bp->name(); };
                 std::vector<AstVar*> paramRefs = declRefs;
                 std::sort(paramRefs.begin(), paramRefs.end(), byName);
                 puts(EmitCUtil::prefixNameProtect(modp));

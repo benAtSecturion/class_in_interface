@@ -283,7 +283,8 @@ public:
     string cFuncArgs(const AstCFunc* nodep, bool cpp = true);
     void emitCDefaultConstructor(const AstNodeModule* modp);
     void emitCFuncHeader(const AstCFunc* funcp, const AstNodeModule* modp, bool withScope);
-    void emitCFuncDecl(const AstCFunc* funcp, const AstNodeModule* modp, bool cLinkage = false, bool emitDefaultConstructor = true);
+    void emitCFuncDecl(const AstCFunc* funcp, const AstNodeModule* modp, bool cLinkage = false,
+                       bool emitDefaultConstructor = true);
     void emitVarDecl(const AstVar* nodep, bool asRef = false);
     void emitVarAccessors(const AstVar* nodep);
     template <typename T_Callable>
