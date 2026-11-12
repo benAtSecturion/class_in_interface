@@ -161,7 +161,7 @@ void EmitCBaseVisitorConst::emitCFuncHeader(const AstCFunc* funcp, const AstNode
     putns(funcp, funcNameProtect(funcp, modp));
     puts("(" + cFuncArgs(funcp));
 
-    
+
     // Bind the reference members to the new class. Sorted by name so the parameter
     // order is stable no matter how the class member list gets reordered; the AstCNew
     // argument lists bind positionally and use the same sort.
@@ -179,7 +179,7 @@ void EmitCBaseVisitorConst::emitCFuncHeader(const AstCFunc* funcp, const AstNode
         std::sort(memberRefs.begin(), memberRefs.end(),
                   [](const AstVar* ap, const AstVar* bp) { return ap->name() < bp->name(); });
         if(memberRefs.size() > 0) puts(", ");
-        
+
         for(size_t i = 0; i < memberRefs.size(); ++i){
             puts(memberRefs[i]->dtypep()->cType("", false, false)); // TODO this doesn't take into account packed variables
             puts(memberRefs[i]->name() + "_REF");
@@ -187,10 +187,10 @@ void EmitCBaseVisitorConst::emitCFuncHeader(const AstCFunc* funcp, const AstNode
                 AstNodeDType* dtypep = memberRefs[i]->dtypep()->skipRefp();
                 if (VN_IS(dtypep, BasicDType)) {
                     puts(" = 0");
-                } 
+                }
                 else if (VN_IS(dtypep, UnpackArrayDType)) {
                     puts(" = {}");
-                } 
+                }
                 else if (dtypep->isString()) {
                     puts(" = \"\"");
                 }
@@ -201,7 +201,7 @@ void EmitCBaseVisitorConst::emitCFuncHeader(const AstCFunc* funcp, const AstNode
             if(i != memberRefs.size() - 1){
                 puts(", ");
             }
-            
+
         }
     }
     puts(")");

@@ -741,7 +741,7 @@ class EmitCHeader final : public EmitCBaseVisitorConst {
                 //         puts(", ");
                 //     }
                 // }
-                
+
                 continue;
             }
             emitCFuncDecl(funcp, modp);

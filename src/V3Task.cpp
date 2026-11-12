@@ -834,8 +834,8 @@ class TaskVisitor final : public VNVisitor {
             if (VN_IS(aboveFuncScopep->modp(), Module) || VN_IS(aboveFuncScopep->modp(), Iface)) {
                 AstScope* correctScopep = aboveFuncScopep;
                 AstClass* classp = nullptr;
-                if (ccallFromp) { 
-                    correctScopep = ccallFromp->varScopep()->scopep(); 
+                if (ccallFromp) {
+                    correctScopep = ccallFromp->varScopep()->scopep();
                      AstClassRefDType* const classDtypep
                         = VN_CAST(ccallFromp->varp()->dtypep()->skipRefp(), ClassRefDType);
                     // Not a class handle (e.g. an interface function called on
